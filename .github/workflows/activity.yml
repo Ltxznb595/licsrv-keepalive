@@ -1,0 +1,25 @@
+name: activity
+# GitHub 会在【60 天没有任何仓库活动】后自动停掉所有 schedule workflow。
+# 这个任务每天提交一个小文件，让仓库始终处于活跃状态，保活才不会在某天悄悄失效。
+on:
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  touch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Touch activity file
+        run: |
+          date -u +"%Y-%m-%dT%H:%M:%SZ" > .last-activity
+          git config user.name "keepalive-bot"
+          git config user.email "keepalive-bot@users.noreply.github.com"
+          git add .last-activity
+          git commit -m "chore: activity $(date -u +%F)" || echo "nothing to commit"
+          git push || echo "push skipped"
